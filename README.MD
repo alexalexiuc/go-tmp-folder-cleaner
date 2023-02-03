@@ -11,10 +11,10 @@ A simple Go application for clearing files in the temp folder with a given prefi
 
 ## Usage
 ```
-./go run . --prefix=<prefix-value>
+go run . prefix=<prefix-value>
 ```
 ## Example
 Clear cdk temp files
 ```
-./go run . --prefix=cdk
+go run . prefix=cdk
 ```
