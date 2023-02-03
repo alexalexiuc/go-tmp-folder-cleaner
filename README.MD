@@ -4,7 +4,7 @@ A simple Go application for clearing files in the temp folder with a given prefi
 
 ## Flags
 ```
---prefix string optional
+prefix string optional
     The prefix of the files to be deleted
     If not provided, all files in the temp folder will be deleted
 ```
