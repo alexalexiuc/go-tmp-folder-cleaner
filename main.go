@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 var tmpFolderPath = os.TempDir()
@@ -66,7 +67,7 @@ func recursiveRemove(path string) {
 	safeRemove(path)
 }
 
-func getEntriesByPrefix(path string, prefix string) []string {
+func getEntriesByPrefixes(path string, prefix []string) []string {
 	res := []string{}
 	entries, err := os.ReadDir(path)
 	if err != nil {
@@ -74,30 +75,65 @@ func getEntriesByPrefix(path string, prefix string) []string {
 	}
 	for _, entry := range entries {
 		if entry.IsDir() {
-			if prefix == "" {
+			if len(prefix) == 0 {
 				res = append(res, entry.Name())
-			} else if strings.HasPrefix(entry.Name(), prefix) {
-				res = append(res, entry.Name())
+			} else {
+				for _, p := range prefix {
+					if strings.HasPrefix(entry.Name(), p) {
+						res = append(res, entry.Name())
+						continue
+					}
+				}
 			}
 		}
 	}
 	return res
 }
 
+func getUserConfirm() {
+	var timeout int = 60 // seconds
+	fmt.Print("Continue ? (y/n): ")
+	var confirm string
+	btnPressed := false
+	go func() {
+		for i := 0; i < timeout; i++ {
+			fmt.Printf("\rContinue ? (y/n): %d", timeout-i)
+			time.Sleep(1 * time.Second)
+			if btnPressed {
+				return
+			}
+		}
+		fmt.Println("\rTimeout")
+		os.Exit(0)
+	}()
+	fmt.Scanln(&confirm)
+	btnPressed = true
+	if confirm != "y" {
+		fmt.Println("Aborted")
+		os.Exit(0)
+	}
+}
+
 func main() {
-	fmt.Printf("Starting...\n\n")
+	fmt.Printf("Starting TEMP folder clean\n\n")
+	getUserConfirm()
+	fmt.Printf("Temp folder: %s\n", tmpFolderPath)
 
 	args := parseArgs()
-	prefix := args["prefix"]
+	prefixStr := args["prefix"]
+	prefixes := strings.Split(prefixStr, ",")
 
-	entries := getEntriesByPrefix(tmpFolderPath, prefix)
+	fmt.Println("Searching files by prefixes: " + prefixStr)
+	entries := getEntriesByPrefixes(tmpFolderPath, prefixes)
 
 	if len(entries) == 0 {
 		fmt.Println("No entries found")
 		return
+	} else {
+		fmt.Printf("Found %d entries\n", len(entries))
 	}
 
-	for _, f := range getEntriesByPrefix(tmpFolderPath, prefix) {
+	for _, f := range getEntriesByPrefixes(tmpFolderPath, prefixes) {
 		fmt.Print("Cleaning " + f + "...")
 		recursiveRemove(tmpFolderPath + "/" + f)
 		fmt.Println("Done")
